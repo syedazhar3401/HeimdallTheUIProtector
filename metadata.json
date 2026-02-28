@@ -1,0 +1,5 @@
+{
+  "name": "Sketch to UI",
+  "description": "Transforms hand-drawn UI sketches into high-fidelity designs using Gemini 3.1 Pro and Nano Banana Pro.",
+  "requestFramePermissions": []
+}
