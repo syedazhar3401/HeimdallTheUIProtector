@@ -12,8 +12,8 @@ declare global {
   }
 }
 
-// ─── Rune symbols for Norse flair ───
-const RUNES = ['ᚠ', 'ᚢ', 'ᚦ', 'ᚨ', 'ᚱ', 'ᚲ', 'ᚷ', 'ᚹ', 'ᚺ', 'ᚾ', 'ᛁ', 'ᛃ', 'ᛇ', 'ᛈ', 'ᛉ', 'ᛊ', 'ᛏ', 'ᛒ', 'ᛖ', 'ᛗ', 'ᛚ', 'ᛜ', 'ᛞ', 'ᛟ'];
+// GIF background path — encoded for the space in filename
+const BG_GIF = '/backgrounds/app%20background.gif';
 
 export default function App() {
   const [hasKey, setHasKey] = useState(false);
@@ -48,14 +48,46 @@ export default function App() {
     }
   };
 
+  // ── Shared full-screen GIF background wrapper ──
+  const GifBackground = () => (
+    <>
+      {/* Full-screen looping GIF — fills entire viewport */}
+      <img
+        src={BG_GIF}
+        alt=""
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
+      />
+      {/* Minimal gradient overlay — just enough for text contrast, NOT hiding the GIF */}
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1,
+        pointerEvents: 'none',
+        background: 'linear-gradient(180deg, rgba(8,12,15,0.45) 0%, rgba(8,12,15,0.25) 40%, rgba(8,12,15,0.55) 100%)',
+      }} />
+    </>
+  );
+
   if (checkingKey) {
     return (
-      <div className="min-h-screen bg-[#080c0f] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
+      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+        <GifBackground />
+        <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
           <div className="sigil-orb">
-            <span className="text-[#d4af37] text-2xl" style={{ fontFamily: 'Cinzel, serif' }}>ᚺ</span>
+            <span style={{ fontFamily: 'Cinzel, serif', color: '#d4af37', fontSize: 22 }}>ᚺ</span>
           </div>
-          <p className="text-[#d4af37]/50 text-xs tracking-[0.3em] uppercase" style={{ fontFamily: 'Cinzel,serif' }}>Awakening…</p>
+          <p style={{ fontFamily: 'Cinzel, serif', color: 'rgba(212,175,55,0.6)', fontSize: 10, letterSpacing: '0.35em', textTransform: 'uppercase' }}>
+            Awakening…
+          </p>
         </div>
       </div>
     );
@@ -63,32 +95,26 @@ export default function App() {
 
   if (!hasKey) {
     return (
-      <div className="min-h-screen bg-[#080c0f] flex items-center justify-center p-6">
-        {/* Background GIF */}
-        <img src="/backgrounds/app_background.gif" alt="" aria-hidden="true"
-          className="fixed inset-0 w-full h-full object-cover pointer-events-none" style={{ zIndex: -20 }} />
-        <div className="fixed inset-0 bg-[#080c0f]/75 pointer-events-none" style={{ zIndex: -10 }} />
-
-        <div className="glass-card p-8 max-w-sm w-full text-center animate-fade-up">
-          {/* Corner decorations */}
+      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative' }}>
+        <GifBackground />
+        <div className="glass-card" style={{ position: 'relative', zIndex: 10, maxWidth: 360, width: '100%', padding: 32, textAlign: 'center' }}>
           <div className="corner-decoration corner-tl" />
           <div className="corner-decoration corner-tr" />
           <div className="corner-decoration corner-bl" />
           <div className="corner-decoration corner-br" />
-
-          <div className="sigil-orb mx-auto mb-6">
-            <Key className="w-6 h-6 text-[#d4af37]" />
+          <div className="sigil-orb" style={{ margin: '0 auto 24px' }}>
+            <Key style={{ width: 22, height: 22, color: '#d4af37' }} />
           </div>
-          <h1 className="rune-font text-[#d4af37] text-2xl mb-2">Entry Required</h1>
-          <p className="text-[#a09070] text-sm leading-relaxed mb-6">
-            Seeker, present your key to access the Bifrost.{' '}
+          <h1 className="rune-font" style={{ color: '#d4af37', fontSize: 22, marginBottom: 8 }}>Entry Required</h1>
+          <p style={{ fontFamily: 'Josefin Sans, sans-serif', color: '#a09070', fontSize: 13, lineHeight: 1.7, marginBottom: 24 }}>
+            Seeker, present your key to cross the Bifrost.{' '}
             <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer"
-              className="text-[#d4af37] hover:text-[#e8cb6a] underline decoration-[#d4af37]/30 underline-offset-4 transition-colors">
-              Acquire one from the Allfather.
+              style={{ color: '#d4af37', textDecoration: 'underline', textDecorationColor: 'rgba(212,175,55,0.3)' }}>
+              Acquire from the Allfather.
             </a>
           </p>
           <button onClick={handleSelectKey} className="btn-bifrost">
-            <Shield className="w-4 h-4" />
+            <Shield style={{ width: 16, height: 16 }} />
             Present Key
           </button>
         </div>
@@ -96,12 +122,12 @@ export default function App() {
     );
   }
 
-  return <MainApp onKeyError={() => setHasKey(false)} />;
+  return <MainApp onKeyError={() => setHasKey(false)} gifBackground={<GifBackground />} />;
 }
 
 type Stage = 'idle' | 'processing' | 'ready' | 'chatting';
 
-function MainApp({ onKeyError }: { onKeyError: () => void }) {
+function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBackground: React.ReactNode }) {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -117,7 +143,7 @@ function MainApp({ onKeyError }: { onKeyError: () => void }) {
 
   const STEPS = [
     { icon: Eye, label: 'Scrying the sketch', sub: 'Vision analysis' },
-    { icon: Zap, label: 'Forging the 4K UI', sub: 'Image generation' },
+    { icon: Zap, label: 'Forging the UI', sub: 'Image generation' },
     { icon: Bot, label: 'Ready for Devstral', sub: 'Awaiting summon' },
   ];
 
@@ -155,7 +181,7 @@ function MainApp({ onKeyError }: { onKeyError: () => void }) {
         contents: {
           parts: [
             { inlineData: { mimeType: selectedFile.type, data: base64Data } },
-            { text: "You are an expert UI/UX designer. Analyze this hand-drawn wireframe/sketch. Describe it for an image generator. Focus on a high-fidelity, modern, clean, and professional UI design. Suggest a modern color palette and typography style." },
+            { text: "You are an expert UI/UX designer. Analyze this hand-drawn wireframe/sketch of a user interface. Describe the layout, the components (buttons, text fields, images, headers, etc.), the structure, and the intended functionality in extreme detail. Your description will be used by an image generation model to create a high-fidelity, modern, clean, and professional UI design. Make sure to specify the placement of elements, the hierarchy, and suggest a modern color palette and typography style that fits the implied purpose of the app." },
           ],
         },
       });
@@ -164,15 +190,20 @@ function MainApp({ onKeyError }: { onKeyError: () => void }) {
       if (!analysis) throw new Error('Scrying failed.');
       setAnalysisText(analysis);
 
-      setProgressStep('Forging 4K UI...');
+      setProgressStep('Forging UI...');
       setProgressIdx(1);
 
-      const generationPrompt = `A high-fidelity, modern, clean, and professional UI design. ${analysis}. No hand-drawn elements. 4K resolution, 16:9 aspect ratio.`;
+      const generationPrompt = `A high-fidelity, modern, clean, and professional UI design. ${analysis}. The design should look like a finished product screenshot from Dribbble or Behance, with proper spacing, modern typography, and a cohesive color scheme. Do not include any hand-drawn elements, make it look like a real digital product.`;
 
       const generationResponse = await ai.models.generateContent({
-        model: 'gemini-3.1-flash-image-preview',
+        model: 'gemini-3-pro-image-preview',
         contents: { parts: [{ text: generationPrompt }] },
-        config: { responseModalities: ['TEXT', 'IMAGE'] },
+        config: {
+          imageConfig: {
+            imageSize: '4K',
+            aspectRatio: '16:9',
+          },
+        },
       });
 
       let imageUrl: string | null = null;
@@ -201,7 +232,7 @@ function MainApp({ onKeyError }: { onKeyError: () => void }) {
 
   const handleFile = (selectedFile: File) => {
     if (!selectedFile.type.startsWith('image/')) {
-      setError('Only image artifacts are accepted by the Allseeing Eye.');
+      setError('Only image artifacts accepted by the Allseeing Eye.');
       return;
     }
     setFile(selectedFile);
@@ -220,305 +251,332 @@ function MainApp({ onKeyError }: { onKeyError: () => void }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#080c0f]" style={{ fontFamily: "'Josefin Sans', sans-serif" }}>
+    <div style={{ minHeight: '100dvh', fontFamily: "'Josefin Sans', sans-serif", position: 'relative', overflow: 'hidden' }}>
 
-      {/* ── Looping background GIF ── */}
-      <img src="/backgrounds/app_background.gif" alt="" aria-hidden="true"
-        className="fixed inset-0 w-full h-full object-cover pointer-events-none"
-        style={{ zIndex: -20 }} />
-      {/* Dark overlay */}
-      <div className="fixed inset-0 pointer-events-none" style={{
-        zIndex: -10,
-        background: 'radial-gradient(ellipse at 50% 0%, rgba(212,175,55,0.04) 0%, transparent 60%), rgba(8,12,15,0.82)'
-      }} />
+      {/* ── Full-screen looping GIF background ── */}
+      {gifBackground}
 
-      {/* ── Floating Header ── */}
-      <header className="fixed top-0 left-0 right-0 z-30 flex justify-center pointer-events-none">
-        <div className="w-full max-w-[420px] px-5 pt-5 pb-3 flex items-center justify-between pointer-events-auto">
+      {/* ── Floating Header — transparent, above GIF ── */}
+      <header style={{
+        position: 'fixed', top: 0, left: 0, right: 0,
+        zIndex: 20,
+        display: 'flex',
+        justifyContent: 'center',
+        padding: '16px 20px 0',
+      }}>
+        <div style={{
+          width: '100%', maxWidth: 480,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: 'rgba(8,12,15,0.45)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderRadius: 20,
+          padding: '10px 18px',
+          border: '1px solid rgba(212,175,55,0.18)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+        }}>
           {/* Logo */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center relative"
-              style={{
-                background: 'radial-gradient(circle at 35% 35%, rgba(212,175,55,0.2), rgba(13,17,23,0.9))',
-                border: '1px solid rgba(212,175,55,0.35)',
-                boxShadow: '0 0 12px rgba(212,175,55,0.2)'
-              }}>
-              <span style={{ fontFamily: 'Cinzel,serif', color: '#d4af37', fontSize: 14 }}>ᚺ</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: 10,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'radial-gradient(circle at 35% 35%, rgba(212,175,55,0.25), rgba(8,12,15,0.8))',
+              border: '1px solid rgba(212,175,55,0.4)',
+              boxShadow: '0 0 10px rgba(212,175,55,0.2)',
+            }}>
+              <span style={{ fontFamily: 'Cinzel, serif', color: '#d4af37', fontSize: 14 }}>ᚺ</span>
             </div>
-            <span style={{ fontFamily: 'Cinzel,serif', color: '#d4af37', fontWeight: 700, fontSize: 15, letterSpacing: '0.15em' }}>
+            <span style={{ fontFamily: 'Cinzel, serif', color: '#e8cb6a', fontWeight: 700, fontSize: 14, letterSpacing: '0.2em' }}>
               HEIMDALL
             </span>
           </div>
           {/* Badge */}
           <div className="tag-badge">
-            <Sparkles style={{ width: 8, height: 8 }} />
-            V3.5
+            <Sparkles style={{ width: 7, height: 7 }} />
+            V4
           </div>
         </div>
       </header>
 
-      {/* ── Mobile Frame ── */}
-      <div className="flex justify-center px-4">
-        <div className="mobile-frame">
-          {/* Subtle scanline texture */}
-          <div className="hud-scanlines" style={{ opacity: 0.4, zIndex: 1 }} />
+      {/* ── Main Content — centered over GIF ── */}
+      <main style={{
+        position: 'relative',
+        zIndex: 10,
+        minHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingTop: 80,
+        paddingBottom: 24,
+        paddingLeft: 16,
+        paddingRight: 16,
+      }}>
+        <div style={{ width: '100%', maxWidth: 440 }}>
 
-          {/* Corner decorations on the frame */}
-          <div className="corner-decoration corner-tl" />
-          <div className="corner-decoration corner-tr" />
-          <div className="corner-decoration corner-bl" />
-          <div className="corner-decoration corner-br" />
+          {/* ── Error Banner ── */}
+          {error && (
+            <div className="animate-fade-in" style={{
+              marginBottom: 16, padding: '12px 16px',
+              borderRadius: 16, display: 'flex', alignItems: 'flex-start', gap: 10,
+              background: 'rgba(220,38,38,0.2)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(220,38,38,0.3)',
+            }}>
+              <AlertCircle style={{ width: 15, height: 15, color: '#f87171', flexShrink: 0, marginTop: 1 }} />
+              <p style={{ color: '#fca5a5', fontSize: 12, lineHeight: 1.5 }}>{error}</p>
+            </div>
+          )}
 
-          {/* Scrollable content area */}
-          <div className="absolute inset-0 overflow-y-auto no-scrollbar pt-20 pb-6 px-5" style={{ zIndex: 2 }}>
+          {/* ═══════════════════════════════
+                   IDLE STAGE
+              ═══════════════════════════════ */}
+          {stage === 'idle' && (
+            <div className="animate-fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-            {/* ── Error Banner ── */}
-            {error && (
-              <div className="mb-4 p-4 rounded-2xl flex items-start gap-3 animate-fade-in"
-                style={{ background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.25)' }}>
-                <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                <p className="text-red-300 text-xs leading-relaxed">{error}</p>
-              </div>
-            )}
-
-            {/* ═══════════════════════════════
-                     IDLE STAGE
-                ═══════════════════════════════ */}
-            {stage === 'idle' && (
-              <div className="flex flex-col items-center gap-8 animate-fade-up">
-
-                {/* Hero Text */}
-                <div className="text-center pt-4">
-                  <p className="text-[#d4af37]/50 text-xs tracking-[0.35em] uppercase mb-3"
-                    style={{ fontFamily: 'Cinzel,serif' }}>
-                    Guardian of the Bifrost
-                  </p>
-                  <h1 className="text-[#e8e0d0] text-2xl leading-tight mb-2"
-                    style={{ fontFamily: 'Cinzel,serif', fontWeight: 700, letterSpacing: '0.1em' }}>
-                    Forge Your Vision
-                  </h1>
-                  <p className="text-[#a09070] text-sm leading-relaxed" style={{ fontFamily: 'Josefin Sans,sans-serif' }}>
-                    Cast your sketch into the realm.<br />
-                    Heimdall weaves it into code.
-                  </p>
-                </div>
-
-                {/* Upload Zone */}
-                <div
-                  className={`upload-zone w-full ${isDragging ? 'dragging' : ''}`}
-                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]); }}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {/* Pulsing sigil */}
-                  <div className="relative mb-6">
-                    <div className="ping-ring" style={{ animationDelay: '0ms' }} />
-                    <div className="ping-ring" style={{ animationDelay: '700ms' }} />
-                    <div className="sigil-orb">
-                      <Upload className="w-7 h-7 text-[#d4af37]" />
-                    </div>
-                  </div>
-
-                  <h2 className="text-[#d4af37] text-lg mb-2" style={{ fontFamily: 'Cinzel,serif', letterSpacing: '0.15em' }}>
-                    Map the Path
-                  </h2>
-                  <p className="text-[#a09070] text-xs leading-relaxed">
-                    Drop your wireframe here<br />
-                    <span className="text-[#d4af37]/40">PNG · JPG · WEBP</span>
-                  </p>
-                  <input type="file" ref={fileInputRef}
-                    onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-                    accept="image/*" className="hidden" />
-                </div>
-
-                {/* Vow Section */}
-                <div className="w-full">
-                  <div className="rune-divider mb-5">Our Vow</div>
-                  <div className="space-y-3">
-                    {[
-                      { icon: Eye, label: 'Instant Vision Analysis', rune: 'ᚢ' },
-                      { icon: Zap, label: 'Epic 4K UI Generation', rune: 'ᚱ' },
-                      { icon: Bot, label: 'Devstral Code Summoning', rune: 'ᛗ' },
-                    ].map((item, i) => (
-                      <div key={i}
-                        className="flex items-center gap-4 p-3 rounded-xl animate-fade-up"
-                        style={{
-                          animationDelay: `${i * 80}ms`,
-                          background: 'rgba(212,175,55,0.04)',
-                          border: '1px solid rgba(212,175,55,0.08)'
-                        }}>
-                        <span className="text-[#d4af37]/40 text-base w-6 text-center" style={{ fontFamily: 'serif' }}>
-                          {item.rune}
-                        </span>
-                        <span className="text-[#a09070] text-xs tracking-wide" style={{ fontFamily: 'Josefin Sans,sans-serif' }}>
-                          {item.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
-            )}
-
-            {/* ═══════════════════════════════
-                   PROCESSING STAGE
-                ═══════════════════════════════ */}
-            {stage === 'processing' && (
-              <div className="flex flex-col items-center gap-6 animate-fade-in">
-
-                {/* Sketch preview with overlay */}
-                {previewUrl && (
-                  <div className="relative w-full rounded-2xl overflow-hidden"
-                    style={{ aspectRatio: '4/3', border: '1px solid rgba(212,175,55,0.15)' }}>
-                    <img src={previewUrl} className="w-full h-full object-cover"
-                      style={{ filter: 'grayscale(100%) contrast(1.2) brightness(0.3)' }} />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-5">
-                      <div className="relative">
-                        <div className="ping-ring" />
-                        <div className="ping-ring" style={{ animationDelay: '600ms' }} />
-                        <div className="sigil-orb">
-                          <Sparkles className="w-6 h-6 text-[#d4af37]" style={{ filter: 'drop-shadow(0 0 6px rgba(212,175,55,0.8))' }} />
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[#d4af37] text-sm mb-1" style={{ fontFamily: 'Cinzel,serif', letterSpacing: '0.15em' }}>
-                          {progressStep || 'Working…'}
-                        </p>
-                        <p className="text-[#a09070]/60 text-xs">The forge is lit…</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Progress steps */}
-                <div className="w-full space-y-2">
-                  {STEPS.map((step, i) => {
-                    const isDone = i < progressIdx;
-                    const isActive = i === progressIdx;
-                    return (
-                      <div key={i} className={`step-item ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}>
-                        <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-                          style={{
-                            background: isDone ? 'rgba(212,175,55,0.15)' : isActive ? 'rgba(212,175,55,0.1)' : 'rgba(255,255,255,0.03)',
-                            border: `1px solid ${isDone || isActive ? 'rgba(212,175,55,0.4)' : 'rgba(255,255,255,0.08)'}`,
-                          }}>
-                          {isDone
-                            ? <CheckCircle className="w-4 h-4 text-[#d4af37]" />
-                            : isActive
-                              ? <Loader2 className="w-4 h-4 text-[#d4af37] animate-spin" />
-                              : <step.icon className="w-3.5 h-3.5 text-white/20" />
-                          }
-                        </div>
-                        <div>
-                          <p className="text-xs"
-                            style={{
-                              fontFamily: 'Josefin Sans,sans-serif',
-                              color: isDone ? 'rgba(212,175,55,0.5)' : isActive ? '#d4af37' : 'rgba(255,255,255,0.2)',
-                              fontWeight: isActive ? 600 : 300,
-                            }}>
-                            {step.label}
-                          </p>
-                          <p className="text-[10px] text-white/20">{step.sub}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <p className="text-[#a09070]/50 text-[10px] tracking-[0.25em] uppercase text-center"
-                  style={{ fontFamily: 'Cinzel,serif' }}>
-                  ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚹ
+              {/* Hero text — wrapped in a dark scrim for readability */}
+              <div style={{
+                textAlign: 'center', marginBottom: 8,
+                background: 'rgba(5,8,12,0.72)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                borderRadius: 20,
+                padding: '20px 24px',
+                border: '1px solid rgba(212,175,55,0.22)',
+              }}>
+                <p style={{
+                  fontFamily: 'Cinzel, serif', color: '#d4af37',
+                  fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase',
+                  marginBottom: 10,
+                }}>
+                  Guardian of the Bifrost
+                </p>
+                <h1 style={{
+                  fontFamily: 'Cinzel, serif', color: '#f5ecd5',
+                  fontSize: 28, fontWeight: 700, letterSpacing: '0.08em',
+                  textShadow: '0 2px 4px rgba(0,0,0,1), 0 4px 16px rgba(0,0,0,0.9), 0 0 30px rgba(212,175,55,0.15)',
+                  margin: 0, marginBottom: 10,
+                }}>
+                  Forge Your Vision
+                </h1>
+                <p style={{
+                  fontFamily: 'Josefin Sans, sans-serif', color: '#e8e0d0',
+                  fontSize: 13, lineHeight: 1.7,
+                }}>
+                  Cast your sketch into the realm.<br />
+                  Heimdall weaves it into code.
                 </p>
               </div>
-            )}
 
-            {/* ═══════════════════════════════
-                     READY STAGE
-                ═══════════════════════════════ */}
-            {stage === 'ready' && generatedImageUrl && (
-              <div className="flex flex-col gap-6 animate-fade-up">
+              {/* Upload Zone — glass panel floating over GIF */}
+              <div
+                className={`upload-zone ${isDragging ? 'dragging' : ''}`}
+                style={{
+                  background: 'rgba(5,8,12,0.72)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                  borderColor: 'rgba(212,175,55,0.22)',
+                }}
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]); }}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <div style={{ position: 'relative', marginBottom: 20 }}>
+                  <div className="ping-ring" />
+                  <div className="ping-ring" style={{ animationDelay: '700ms' }} />
+                  <div className="sigil-orb">
+                    <Upload style={{ width: 26, height: 26, color: '#d4af37' }} />
+                  </div>
+                </div>
+                <h2 style={{ fontFamily: 'Cinzel, serif', color: '#d4af37', fontSize: 17, letterSpacing: '0.15em', marginBottom: 8 }}>
+                  Map the Path
+                </h2>
+                <p style={{ color: '#e8e0d0', fontSize: 12, lineHeight: 1.6 }}>
+                  Drop your wireframe here<br />
+                  <span style={{ color: '#a09070', fontSize: 11 }}>PNG · JPG · WEBP</span>
+                </p>
+                <input type="file" ref={fileInputRef}
+                  onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+                  accept="image/*" style={{ display: 'none' }} />
+              </div>
 
-                {/* Generated artifact */}
-                <div className="relative rounded-2xl overflow-hidden"
-                  style={{ border: '1px solid rgba(212,175,55,0.25)', boxShadow: '0 0 40px rgba(212,175,55,0.1)' }}>
-                  <img src={generatedImageUrl} className="w-full" />
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0"
-                    style={{ background: 'linear-gradient(to bottom, transparent 60%, rgba(8,12,15,0.8) 100%)' }} />
-                  {/* Badge */}
-                  <div className="absolute top-3 left-3">
-                    <span className="tag-badge">
-                      <Zap style={{ width: 7, height: 7 }} />
-                      4K Artifact
+              {/* Feature rows — glass pills */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div className="rune-divider" style={{ marginBottom: 4 }}>Our Vow</div>
+                {[
+                  { icon: Eye, label: 'Instant Vision Analysis', rune: 'ᚢ' },
+                  { icon: Zap, label: 'Epic UI Generation', rune: 'ᚱ' },
+                  { icon: Bot, label: 'Devstral Code Summoning', rune: 'ᛗ' },
+                ].map((item, i) => (
+                  <div key={i} className="animate-fade-up" style={{
+                    animationDelay: `${i * 80}ms`,
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    padding: '12px 16px', borderRadius: 14,
+                    background: 'rgba(5,8,12,0.72)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(212,175,55,0.22)',
+                  }}>
+                    <span style={{ fontFamily: 'serif', color: '#d4af37', fontSize: 15, width: 20, textAlign: 'center' }}>
+                      {item.rune}
+                    </span>
+                    <span style={{ fontFamily: 'Josefin Sans, sans-serif', color: '#e8e0d0', fontSize: 12, letterSpacing: '0.04em', fontWeight: 400 }}>
+                      {item.label}
                     </span>
                   </div>
-                </div>
-
-                {/* Success message */}
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <CheckCircle className="w-4 h-4 text-[#d4af37]" />
-                    <p className="text-[#d4af37] text-sm" style={{ fontFamily: 'Cinzel,serif', letterSpacing: '0.12em' }}>
-                      Artifact Forged
-                    </p>
-                  </div>
-                  <p className="text-[#a09070] text-xs">Your vision has taken form. Summon Devstral to forge the code.</p>
-                </div>
-
-                {/* CTA Buttons */}
-                <div className="flex flex-col gap-3">
-                  <button onClick={() => setStage('chatting')} className="btn-bifrost">
-                    <Bot className="w-4 h-4" />
-                    Summon Devstral
-                  </button>
-                  <button onClick={handleReset} className="btn-ghost">
-                    ᛟ  Discard & Start Over  ᛟ
-                  </button>
-                </div>
-
+                ))}
               </div>
-            )}
+            </div>
+          )}
 
-            {/* ═══════════════════════════════
-                   CHATTING STAGE
-                ═══════════════════════════════ */}
-            {stage === 'chatting' && analysisText && (
-              <div className="flex flex-col gap-4 animate-fade-in">
+          {/* ═══════════════════════════════
+                 PROCESSING STAGE
+              ═══════════════════════════════ */}
+          {stage === 'processing' && (
+            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-                {/* Thumbnail reference */}
-                {generatedImageUrl && (
-                  <div className="relative rounded-xl overflow-hidden h-28 shrink-0"
-                    style={{ border: '1px solid rgba(212,175,55,0.15)' }}>
-                    <img src={generatedImageUrl} className="w-full h-full object-cover opacity-40" />
-                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(8,12,15,0.6), transparent)' }} />
-                    <div className="absolute inset-0 flex items-center px-4">
-                      <div>
-                        <p className="text-[#d4af37] text-xs mb-0.5" style={{ fontFamily: 'Cinzel,serif', letterSpacing: '0.12em' }}>
-                          Active Artifact
-                        </p>
-                        <p className="text-[#a09070] text-[11px]">Devstral reads your vision</p>
+              {/* Preview with glow blur effect */}
+              {previewUrl && (
+                <div style={{
+                  position: 'relative', borderRadius: 20, overflow: 'hidden',
+                  border: '1px solid rgba(212,175,55,0.2)',
+                  aspectRatio: '4/3',
+                }}>
+                  <img src={previewUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(100%) brightness(0.25) contrast(1.3)' }} />
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20,
+                  }}>
+                    <div style={{ position: 'relative' }}>
+                      <div className="ping-ring" />
+                      <div className="ping-ring" style={{ animationDelay: '600ms' }} />
+                      <div className="sigil-orb">
+                        <Sparkles style={{ width: 24, height: 24, color: '#d4af37', filter: 'drop-shadow(0 0 8px rgba(212,175,55,0.8))' }} />
                       </div>
                     </div>
-                    <div className="absolute top-2 right-2">
-                      <span className="tag-badge">4K</span>
+                    <div style={{ textAlign: 'center' }}>
+                      <p style={{ fontFamily: 'Cinzel, serif', color: '#d4af37', fontSize: 14, letterSpacing: '0.15em', marginBottom: 4, textShadow: '0 0 20px rgba(212,175,55,0.5)' }}>
+                        {progressStep || 'Working…'}
+                      </p>
+                      <p style={{ color: 'rgba(160,144,112,0.6)', fontSize: 11 }}>The forge is lit…</p>
                     </div>
                   </div>
-                )}
-
-                {/* ChatBox */}
-                <div className="-mx-5">
-                  <ChatBox initialAnalysis={analysisText} />
                 </div>
+              )}
 
+              {/* Steps */}
+              <div style={{
+                borderRadius: 20, overflow: 'hidden',
+                background: 'rgba(8,12,15,0.5)',
+                backdropFilter: 'blur(14px)',
+                WebkitBackdropFilter: 'blur(14px)',
+                border: '1px solid rgba(212,175,55,0.12)',
+                padding: 16,
+              }}>
+                {STEPS.map((step, i) => {
+                  const isDone = i < progressIdx;
+                  const isActive = i === progressIdx;
+                  return (
+                    <div key={i} className={`step-item ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}>
+                      <div style={{
+                        width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: isDone || isActive ? 'rgba(212,175,55,0.15)' : 'rgba(255,255,255,0.03)',
+                        border: `1px solid ${isDone || isActive ? 'rgba(212,175,55,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                      }}>
+                        {isDone
+                          ? <CheckCircle style={{ width: 14, height: 14, color: '#d4af37' }} />
+                          : isActive
+                            ? <Loader2 style={{ width: 14, height: 14, color: '#d4af37', animation: 'spin 1s linear infinite' }} />
+                            : <step.icon style={{ width: 12, height: 12, color: 'rgba(255,255,255,0.2)' }} />
+                        }
+                      </div>
+                      <div>
+                        <p style={{ fontSize: 12, color: isDone ? 'rgba(212,175,55,0.5)' : isActive ? '#d4af37' : 'rgba(255,255,255,0.2)', fontWeight: isActive ? 600 : 300 }}>
+                          {step.label}
+                        </p>
+                        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{step.sub}</p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            )}
 
-          </div>{/* end scrollable content */}
-        </div>{/* end mobile-frame */}
-      </div>
+              <p style={{ fontFamily: 'Cinzel, serif', color: 'rgba(212,175,55,0.4)', fontSize: 10, letterSpacing: '0.3em', textAlign: 'center', textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>
+                ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚹ
+              </p>
+            </div>
+          )}
 
+          {/* ═══════════════════════════════
+                   READY STAGE
+              ═══════════════════════════════ */}
+          {stage === 'ready' && generatedImageUrl && (
+            <div className="animate-fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{
+                position: 'relative', borderRadius: 20, overflow: 'hidden',
+                border: '1px solid rgba(212,175,55,0.3)',
+                boxShadow: '0 0 40px rgba(212,175,55,0.12), 0 20px 60px rgba(0,0,0,0.5)',
+              }}>
+                <img src={generatedImageUrl} style={{ width: '100%', display: 'block' }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 60%, rgba(8,12,15,0.7) 100%)' }} />
+                <div style={{ position: 'absolute', top: 12, left: 12 }}>
+                  <span className="tag-badge"><Zap style={{ width: 7, height: 7 }} />Artifact Forged</span>
+                </div>
+              </div>
+
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 4 }}>
+                  <CheckCircle style={{ width: 14, height: 14, color: '#d4af37' }} />
+                  <p style={{ fontFamily: 'Cinzel, serif', color: '#d4af37', fontSize: 13, letterSpacing: '0.12em', textShadow: '0 0 20px rgba(212,175,55,0.4)' }}>
+                    Vision Forged
+                  </p>
+                </div>
+                <p style={{ color: 'rgba(160,144,112,0.8)', fontSize: 12, textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>
+                  Summon Devstral to forge the code.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <button onClick={() => setStage('chatting')} className="btn-bifrost">
+                  <Bot style={{ width: 16, height: 16 }} />
+                  Summon Devstral
+                </button>
+                <button onClick={handleReset} className="btn-ghost">
+                  ᛟ  Discard & Start Over  ᛟ
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ═══════════════════════════════
+                 CHATTING STAGE
+              ═══════════════════════════════ */}
+          {stage === 'chatting' && analysisText && (
+            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {generatedImageUrl && (
+                <div style={{
+                  position: 'relative', borderRadius: 16, overflow: 'hidden', height: 100,
+                  border: '1px solid rgba(212,175,55,0.15)',
+                }}>
+                  <img src={generatedImageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.45 }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(8,12,15,0.7), transparent)', display: 'flex', alignItems: 'center', padding: '0 16px' }}>
+                    <div>
+                      <p style={{ fontFamily: 'Cinzel, serif', color: '#d4af37', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Active Artifact</p>
+                      <p style={{ color: 'rgba(160,144,112,0.7)', fontSize: 11 }}>Devstral reads your vision</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div style={{ marginLeft: -16, marginRight: -16 }}>
+                <ChatBox initialAnalysis={analysisText} />
+              </div>
+            </div>
+          )}
+
+        </div>
+      </main>
     </div>
   );
 }
