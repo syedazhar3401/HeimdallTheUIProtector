@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, DragEvent, ChangeEvent, useCallback } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import { Upload, Loader2, Sparkles, AlertCircle, Key, Bot, CheckCircle, Shield, Eye, Zap } from 'lucide-react';
+import { Upload, Loader2, Sparkles, AlertCircle, Key, Bot, CheckCircle, Shield, Eye, Zap, Download, FileText } from 'lucide-react';
 import ChatBox from './ChatBox';
 
 declare global {
@@ -250,7 +250,30 @@ function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBac
     setError(null);
   };
 
+  // ── Download helpers ────────────────────────────────────────────────
+  const downloadImage = () => {
+    if (!generatedImageUrl) return;
+    const a = document.createElement('a');
+    a.href = generatedImageUrl; // already a base64 data URI
+    a.download = 'heimdall-vision.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const downloadAnalysis = () => {
+    if (!analysisText) return;
+    const base64 = btoa(unescape(encodeURIComponent(analysisText)));
+    const a = document.createElement('a');
+    a.href = `data:text/plain;charset=utf-8;base64,${base64}`;
+    a.download = 'heimdall-analysis.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   return (
+
     <div style={{ minHeight: '100dvh', fontFamily: "'Josefin Sans', sans-serif", position: 'relative', overflow: 'hidden' }}>
 
       {/* ── Full-screen looping GIF background ── */}
@@ -538,13 +561,43 @@ function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBac
                 </p>
               </div>
 
+              {/* Download Row */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={downloadImage} style={{
+                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  padding: '9px 12px', borderRadius: 14, cursor: 'pointer',
+                  background: 'rgba(5,8,12,0.72)', backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(212,175,55,0.3)',
+                  color: '#d4af37', fontFamily: 'Josefin Sans, sans-serif',
+                  fontSize: 11, letterSpacing: '0.06em', fontWeight: 600,
+                  transition: 'all 0.2s',
+                }}>
+                  <Download style={{ width: 13, height: 13 }} />
+                  Save Image
+                </button>
+                <button onClick={downloadAnalysis} style={{
+                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  padding: '9px 12px', borderRadius: 14, cursor: 'pointer',
+                  background: 'rgba(5,8,12,0.72)', backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(212,175,55,0.3)',
+                  color: '#d4af37', fontFamily: 'Josefin Sans, sans-serif',
+                  fontSize: 11, letterSpacing: '0.06em', fontWeight: 600,
+                  transition: 'all 0.2s',
+                }}>
+                  <FileText style={{ width: 13, height: 13 }} />
+                  Save Analysis
+                </button>
+              </div>
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <button onClick={() => setStage('chatting')} className="btn-bifrost">
                   <Bot style={{ width: 16, height: 16 }} />
                   Summon Devstral
                 </button>
                 <button onClick={handleReset} className="btn-ghost">
-                  ᛟ  Discard & Start Over  ᛟ
+                  ᛟ  Discard &amp; Start Over  ᛟ
                 </button>
               </div>
             </div>
@@ -561,10 +614,25 @@ function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBac
                   border: '1px solid rgba(212,175,55,0.15)',
                 }}>
                   <img src={generatedImageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.45 }} />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(8,12,15,0.7), transparent)', display: 'flex', alignItems: 'center', padding: '0 16px' }}>
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(8,12,15,0.7), transparent)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px' }}>
                     <div>
                       <p style={{ fontFamily: 'Cinzel, serif', color: '#d4af37', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Active Artifact</p>
                       <p style={{ color: 'rgba(160,144,112,0.7)', fontSize: 11 }}>Devstral reads your vision</p>
+                    </div>
+                    {/* Quick-save buttons on the banner */}
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button onClick={downloadImage} title="Save Image" style={{
+                        width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'rgba(5,8,12,0.8)', border: '1px solid rgba(212,175,55,0.3)', cursor: 'pointer', color: '#d4af37',
+                      }}>
+                        <Download style={{ width: 12, height: 12 }} />
+                      </button>
+                      <button onClick={downloadAnalysis} title="Save Analysis" style={{
+                        width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'rgba(5,8,12,0.8)', border: '1px solid rgba(212,175,55,0.3)', cursor: 'pointer', color: '#d4af37',
+                      }}>
+                        <FileText style={{ width: 12, height: 12 }} />
+                      </button>
                     </div>
                   </div>
                 </div>
