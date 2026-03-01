@@ -1,1 +1,86 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --forest-green: 13, 40, 24;
+    --epic-gold: 212, 175, 55;
+    --dark-void: 5, 16, 10;
+    --parchment: 224, 215, 184;
+    --glow-gold: 0px 0px 15px rgba(212, 175, 55, 0.3);
+  }
+
+  body {
+    @apply bg-zinc-950 text-white min-h-screen overflow-x-hidden;
+    background-color: rgb(var(--dark-void));
+    color: rgb(var(--parchment));
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  h1, h2, h3, h4, .epic-font {
+    font-family: 'Cinzel', serif;
+    @apply tracking-wider;
+  }
+
+  /* Chatbot font isolation */
+  .chatbot-font {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  }
+}
+
+@layer components {
+  /* Mobile Frame Simulation */
+  .mobile-frame-container {
+    @apply relative mx-auto overflow-hidden shadow-2xl transition-all duration-500;
+    max-width: 480px;
+    height: calc(100vh - 40px);
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border: 4px solid rgb(var(--epic-gold), 0.2);
+    border-radius: 40px;
+    background-color: rgb(var(--dark-void));
+    box-shadow: var(--glow-gold);
+  }
+
+  @media (max-width: 640px) {
+    .mobile-frame-container {
+      @apply m-0 border-none rounded-none max-w-none h-screen;
+    }
+  }
+
+  /* Themed Background */
+  .adventure-bg {
+    @apply fixed inset-0 -z-10 pointer-events-none;
+    background-image: 
+      radial-gradient(circle at 50% 50%, rgba(var(--epic-gold), 0.05) 0%, transparent 70%),
+      url('/backgrounds/bg.gif');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.15;
+  }
+
+  .gold-button {
+    @apply flex items-center justify-center gap-2.5 py-4 px-6 rounded-xl font-semibold transition-all duration-300;
+    background: linear-gradient(135deg, rgb(var(--epic-gold)), #b89130);
+    color: rgb(var(--dark-void));
+    box-shadow: 0 4px 0 #b89130;
+  }
+
+  .gold-button:hover {
+    @apply scale-[1.02] opacity-90;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #b89130, var(--glow-gold);
+  }
+
+  .gold-button:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #b89130;
+  }
+
+  .forest-card {
+    @apply bg-zinc-900/40 backdrop-blur-md border border-indigo-500/20 rounded-2xl p-6 shadow-xl;
+    border-color: rgba(var(--epic-gold), 0.1);
+  }
+}

@@ -26,7 +26,7 @@ ANALYSIS OF THE UI:
 ${initialAnalysis}
 
 INSTRUCTIONS:
-1. First, warmly greet the user and ask them what type of app they want to build (e.g., React with Vite, plain HTML/CSS/JS, Next.js). Mention the analysis you received.
+1. First, warmly greet the user/seeker and ask them what type of app they want to build (e.g., React with Vite, plain HTML/CSS/JS, Next.js). Mention the quest/analysis you received.
 2. Wait for their response.
 3. Once they confirm the stack, generate the full code for the application.
 4. DESIGN AESTHETICS (CRITICAL): The user must be WOWED at first glance. You MUST use best practices in modern web design (e.g., vibrant colors, sleek dark modes, glassmorphism, smooth gradients, and micro-animations) to create a premium, state-of-the-art interface. Avoid generic colors; use curated, harmonious palettes. Use modern typography. Add hover effects and interactive elements. Do NOT generate a basic or plain UI. Use Tailwind CSS heavily for styling.
@@ -58,11 +58,11 @@ This exact format with the bold **filename** is required so the file parser can 
                     setMessages(prev => [...prev, data.choices[0].message]);
                 } else if (data.error) {
                     console.error("Mistral API Error:", data.error);
-                    setMessages(prev => [...prev, { role: 'assistant', content: 'There was an error connecting to Mistral. Please ensure the API key is correct.' }]);
+                    setMessages(prev => [...prev, { role: 'assistant', content: 'The mystical connection to Mistral has faltered. Ensure your key is valid.' }]);
                 }
             } catch (e) {
                 console.error("Error fetching initial greeting:", e);
-                setMessages(prev => [...prev, { role: 'assistant', content: 'Hello! I am ready to help you build the app based on your sketch. What tech stack would you like to use? (e.g., React, Plain HTML/JS)' }]);
+                setMessages(prev => [...prev, { role: 'assistant', content: 'Greetings, Seeker! I am Devstral, ready to forge your vision into code. What tech stack shall we use for this quest?' }]);
             } finally {
                 setIsLoading(false);
             }
@@ -99,11 +99,11 @@ This exact format with the bold **filename** is required so the file parser can 
                 setMessages([...newMessages, data.choices[0].message]);
             } else if (data.error) {
                 console.error("Mistral API Error:", data.error);
-                setMessages([...newMessages, { role: 'assistant', content: `Error: ${data.error.message || 'API request failed'}` }]);
+                setMessages([...newMessages, { role: 'assistant', content: `Error: ${data.error.message || 'The magic failed.'}` }]);
             }
         } catch (e) {
             console.error(e);
-            setMessages([...newMessages, { role: 'assistant', content: 'Sorry, I encountered an error communicating with the API.' }]);
+            setMessages([...newMessages, { role: 'assistant', content: 'The connection to the arcane was severed mid-spell.' }]);
         } finally {
             setIsLoading(false);
         }
@@ -112,10 +112,7 @@ This exact format with the bold **filename** is required so the file parser can 
     const handleDownloadZip = async () => {
         const zip = new JSZip();
         let hasFiles = false;
-
-        // A regex to find "**filename**\n```lang\ncode\n```" or similar
         const codeBlockRegex = /\*\*(.+?)\*\*\s*```\w*\n([\s\S]*?)```/gi;
-
         const allContent = messages.filter(m => m.role === 'assistant').map(m => m.content).join('\n\n');
         let match;
         while ((match = codeBlockRegex.exec(allContent)) !== null) {
@@ -124,8 +121,6 @@ This exact format with the bold **filename** is required so the file parser can 
             zip.file(filePath, code);
             hasFiles = true;
         }
-
-        // fallback regex if they used `filename` instead of **filename**
         const fallbackRegex = /`(.+?)`\s*```\w*\n([\s\S]*?)```/gi;
         if (!hasFiles) {
             while ((match = fallbackRegex.exec(allContent)) !== null) {
@@ -135,58 +130,57 @@ This exact format with the bold **filename** is required so the file parser can 
                 hasFiles = true;
             }
         }
-
         if (hasFiles) {
             const blob = await zip.generateAsync({ type: 'blob' });
-            saveAs(blob, 'generated-app.zip');
+            saveAs(blob, 'heimdall-artifact.zip');
         } else {
-            alert("No code blocks found to download. Please ask the agent to generate the files first.");
+            alert("No artifacts found to materialize. Ask Devstral to forge the files first.");
         }
     };
 
     return (
-        <div className="flex flex-col h-[500px] border border-zinc-200 rounded-xl bg-white shadow-sm overflow-hidden mt-6">
-            <div className="flex items-center justify-between px-4 py-3 bg-zinc-50 border-b border-zinc-200">
-                <div className="flex items-center gap-2 text-zinc-800 font-medium">
-                    <Bot className="w-5 h-5 text-indigo-600" />
-                    Devstral App Generator
+        <div className="flex flex-col h-[600px] border border-[#d4af37]/20 rounded-t-3xl bg-[#05100a]/80 backdrop-blur-2xl shadow-2xl overflow-hidden chatbot-font">
+            <div className="flex items-center justify-between px-6 py-4 bg-[#0d2818]/60 border-b border-[#d4af37]/20">
+                <div className="flex items-center gap-3 text-[#d4af37] font-semibold epic-font uppercase tracking-widest text-xs">
+                    <Bot className="w-5 h-5 text-[#d4af37]" />
+                    Devstral Agent
                 </div>
                 <button
                     onClick={handleDownloadZip}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition"
+                    className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold text-[#05100a] bg-[#d4af37] rounded-lg hover:scale-105 active:scale-95 transition-all epic-font uppercase tracking-tight"
                 >
                     <Download className="w-4 h-4" />
-                    Download App
+                    Materialize
                 </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-zinc-50/50">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
                 {messages.filter(m => m.role !== 'system').map((msg, i) => (
-                    <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-zinc-200 text-zinc-700' : 'bg-indigo-100 text-indigo-700'}`}>
-                            {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                    <div key={i} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                        <div className={`w-10 h-10 rounded-full border border-[#d4af37]/20 flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-[#d4af37]/10 text-[#d4af37]' : 'bg-[#0d2818] text-[#d4af37]'}`}>
+                            {msg.role === 'user' ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
                         </div>
-                        <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-white border border-zinc-200 text-zinc-800 rounded-tl-sm shadow-sm'}`}>
-                            <div className="whitespace-pre-wrap font-sans leading-relaxed">{msg.content}</div>
+                        <div className={`max-w-[85%] rounded-2xl px-5 py-4 text-sm leading-relaxed shadow-lg ${msg.role === 'user' ? 'bg-[#d4af37] text-[#05100a] font-medium rounded-tr-none' : 'bg-[#0d2818]/80 border border-[#d4af37]/20 text-[#e0d7b8] rounded-tl-none'}`}>
+                            <div className="whitespace-pre-wrap">{msg.content}</div>
                         </div>
                     </div>
                 ))}
                 {isLoading && (
-                    <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 text-indigo-700">
-                            <Bot className="w-4 h-4" />
+                    <div className="flex gap-4">
+                        <div className="w-10 h-10 rounded-full bg-[#0d2818] border border-[#d4af37]/20 flex items-center justify-center shrink-0 text-[#d4af37]">
+                            <Bot className="w-5 h-5" />
                         </div>
-                        <div className="bg-white border border-zinc-200 shadow-sm rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-zinc-500 flex items-center gap-2">
+                        <div className="bg-[#0d2818]/60 border border-[#d4af37]/10 shadow-sm rounded-2xl rounded-tl-none px-5 py-4 text-sm text-[#e0d7b8]/60 flex items-center gap-3 italic">
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            Thinking...
+                            Consulting the archives…
                         </div>
                     </div>
                 )}
                 <div ref={messagesEndRef} />
             </div>
 
-            <div className="p-3 bg-white border-t border-zinc-200">
-                <div className="relative flex items-center text-sm">
+            <div className="p-4 bg-[#05100a]">
+                <div className="relative flex items-center">
                     <input
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
@@ -196,15 +190,15 @@ This exact format with the bold **filename** is required so the file parser can 
                                 handleSend();
                             }
                         }}
-                        placeholder="Tell Devstral what to build..."
-                        className="w-full pl-4 pr-12 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                        placeholder="Instruct Devstral..."
+                        className="w-full pl-6 pr-14 py-4 bg-[#0d2818]/40 border border-[#d4af37]/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#d4af37]/20 focus:border-[#d4af37]/40 transition-all text-[#e0d7b8] placeholder:text-[#e0d7b8]/20"
                     />
                     <button
                         onClick={handleSend}
                         disabled={!input.trim() || isLoading}
-                        className="absolute right-2 p-2 text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg disabled:opacity-50 disabled:hover:text-zinc-400 disabled:hover:bg-transparent transition"
+                        className="absolute right-3 p-3 text-[#d4af37] hover:bg-[#d4af37]/10 rounded-xl disabled:opacity-30 transition-all"
                     >
-                        <Send className="w-4 h-4" />
+                        <Send className="w-5 h-5" />
                     </button>
                 </div>
             </div>

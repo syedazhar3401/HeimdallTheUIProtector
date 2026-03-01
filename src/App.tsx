@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, DragEvent, ChangeEvent, useCallback } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import { Upload, Loader2, Sparkles, AlertCircle, LayoutTemplate, Key, Bot, CheckCircle } from 'lucide-react';
+import { Upload, Loader2, Sparkles, AlertCircle, LayoutTemplate, Key, Bot, CheckCircle, Shield, Map as MapIcon, Compass } from 'lucide-react';
 import ChatBox from './ChatBox';
 
 declare global {
@@ -47,32 +47,32 @@ export default function App() {
 
   if (checkingKey) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-400" />
+      <div className="min-h-screen bg-[#05100a] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#d4af37]" />
       </div>
     );
   }
 
   if (!hasKey) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-        <div className="bg-zinc-900 p-8 rounded-2xl shadow-2xl border border-zinc-800 max-w-md w-full text-center">
-          <div className="w-14 h-14 bg-indigo-500/10 text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-5">
-            <Key className="w-7 h-7" />
+      <div className="min-h-screen bg-[#05100a] flex items-center justify-center p-4">
+        <div className="bg-[#0d2818]/60 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-[#d4af37]/20 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-[#d4af37]/10 text-[#d4af37] rounded-full flex items-center justify-center mx-auto mb-6 border border-[#d4af37]/30 shadow-[0_0_20px_rgba(212,175,55,0.2)]">
+            <Key className="w-8 h-8" />
           </div>
-          <h1 className="text-2xl font-semibold text-white mb-2">API Key Required</h1>
-          <p className="text-zinc-400 mb-6">
-            To use HeimdallSketch, you need to select a paid Google Cloud API key.
+          <h1 className="text-3xl font-bold text-[#d4af37] mb-3 epic-font">Entry Required</h1>
+          <p className="text-[#e0d7b8]/80 mb-8 font-serif italic">
+            Seeker, you must provide your mystical key to enter the halls of Heimdall.
             <br /><br />
-            <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2">
-              Learn more about billing
+            <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer" className="text-[#d4af37] hover:brightness-125 underline decoration-[#d4af37]/30 underline-offset-4">
+              Acquire a key from the Elders
             </a>
           </p>
           <button
             onClick={handleSelectKey}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 px-4 rounded-xl transition-all"
+            className="gold-button w-full"
           >
-            Select API Key
+            Present Key
           </button>
         </div>
       </div>
@@ -117,49 +117,33 @@ function MainApp({ onKeyError }: { onKeyError: () => void }) {
     try {
       // @ts-ignore
       const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-      if (!apiKey) throw new Error('API key is missing. Please select an API key.');
+      if (!apiKey) throw new Error('Key is missing from your pouch.');
 
       const ai = new GoogleGenAI({ apiKey });
       const base64Data = await fileToBase64(selectedFile);
 
-      // Step 1: Analyze the sketch
-      setProgressStep('Analyzing sketch...');
+      setProgressStep('Scrying sketch...');
       const analysisResponse = await ai.models.generateContent({
         model: 'gemini-3.1-pro-preview',
         contents: {
           parts: [
-            {
-              inlineData: {
-                mimeType: selectedFile.type,
-                data: base64Data,
-              },
-            },
-            {
-              text: "You are an expert UI/UX designer. Analyze this hand-drawn wireframe/sketch of a user interface. Describe the layout, the components (buttons, text fields, images, headers, etc.), the structure, and the intended functionality in extreme detail. Your description will be used by an image generation model to create a high-fidelity, modern, clean, and professional UI design. Make sure to specify the placement of elements, the hierarchy, and suggest a modern color palette and typography style that fits the implied purpose of the app.",
-            },
+            { inlineData: { mimeType: selectedFile.type, data: base64Data } },
+            { text: "You are an expert UI/UX designer. Analyze this hand-drawn wireframe/sketch. Describe it for an image generator. Focus on a high-fidelity, modern, clean, and professional UI design. Suggest a modern color palette and typography style." },
           ],
         },
       });
 
       const analysis = analysisResponse.text;
-      if (!analysis) throw new Error('Failed to analyze the image.');
+      if (!analysis) throw new Error('Scrying failed.');
       setAnalysisText(analysis);
 
-      // Step 2: Generate the high-fidelity UI (always 4K)
-      setProgressStep('Designing UI in 4K...');
-      const generationPrompt = `A high-fidelity, modern, clean, and professional UI design. ${analysis}. The design should look like a finished product screenshot from Dribbble or Behance, with proper spacing, modern typography, and a cohesive color scheme. Do not include any hand-drawn elements, make it look like a real digital product.`;
+      setProgressStep('Forging 4K UI...');
+      const generationPrompt = `A high-fidelity, modern, clean, and professional UI design. ${analysis}. No hand-drawn elements.`;
 
       const generationResponse = await ai.models.generateContent({
         model: 'gemini-3-pro-image-preview',
-        contents: {
-          parts: [{ text: generationPrompt }],
-        },
-        config: {
-          imageConfig: {
-            imageSize: '4K',
-            aspectRatio: '16:9',
-          },
-        },
+        contents: { parts: [{ text: generationPrompt }] },
+        config: { imageConfig: { imageSize: '4K', aspectRatio: '16:9' } },
       });
 
       let imageUrl: string | null = null;
@@ -172,41 +156,28 @@ function MainApp({ onKeyError }: { onKeyError: () => void }) {
         }
       }
 
-      if (!imageUrl) throw new Error('Failed to generate image. No image data returned.');
+      if (!imageUrl) throw new Error('Forging failed.');
 
       setGeneratedImageUrl(imageUrl);
       setProgressStep('');
       setStage('ready');
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'An error occurred during generation.');
+      setError(err.message || 'The magic failed.');
       setStage('idle');
-      if (err.message?.includes('Requested entity was not found')) {
-        onKeyError();
-      }
+      if (err.message?.includes('Requested entity was not found')) onKeyError();
     }
   }, [onKeyError]);
 
   const handleFile = (selectedFile: File) => {
     if (!selectedFile.type.startsWith('image/')) {
-      setError('Please upload an image file.');
+      setError('Only visual artifacts are accepted.');
       return;
     }
     setFile(selectedFile);
     setPreviewUrl(URL.createObjectURL(selectedFile));
     setError(null);
     runGeneration(selectedFile);
-  };
-
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(true); };
-  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(false); };
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]);
-  };
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) handleFile(e.target.files[0]);
   };
 
   const handleReset = () => {
@@ -219,138 +190,144 @@ function MainApp({ onKeyError }: { onKeyError: () => void }) {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white font-sans">
-      {/* Header */}
-      <header className="border-b border-zinc-800/80 backdrop-blur-sm bg-zinc-950/80 sticky top-0 z-20">
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-indigo-500 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/30">
-              <LayoutTemplate className="w-4 h-4 text-white" />
+    <div className="min-h-screen bg-[#05100a] text-[#e0d7b8] font-serif selection:bg-[#d4af37]/30 selection:text-[#d4af37]">
+      <div className="adventure-bg" />
+
+      {/* Header (Floating Adventure Style) */}
+      <header className="fixed top-0 left-0 right-0 z-30 px-6 py-4 pointer-events-none">
+        <div className="max-w-[480px] mx-auto flex items-center justify-between pointer-events-auto">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#0d2818] border border-[#d4af37]/40 rounded-full flex items-center justify-center shadow-lg shadow-black/50 overflow-hidden">
+              <Shield className="w-5 h-5 text-[#d4af37]" />
             </div>
-            <span className="text-base font-semibold tracking-tight">HeimdallSketch</span>
+            <span className="text-xl font-bold epic-font text-[#d4af37] drop-shadow-md">Heimdall</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            Powered by Gemini &amp; Devstral 2
+          <div className="flex items-center gap-2 text-[10px] epic-font text-[#d4af37]/60 tracking-[0.2em] uppercase">
+            <Sparkles className="w-3 h-3" />
+            V3 Edition
           </div>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-12">
-        {/* Error Banner */}
-        {error && (
-          <div className="mb-8 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3 text-red-400">
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-            <p className="text-sm">{error}</p>
-          </div>
-        )}
+      <main className="pt-20 pb-10">
+        <div className="mobile-frame-container overflow-y-auto no-scrollbar relative">
 
-        {/* === IDLE: Upload only === */}
-        {stage === 'idle' && (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div
-              className={`relative w-full max-w-lg border-2 border-dashed rounded-2xl p-16 text-center transition-all cursor-pointer group
-                ${isDragging
-                  ? 'border-indigo-500 bg-indigo-500/10 scale-[1.02]'
-                  : 'border-zinc-700 hover:border-zinc-600 hover:bg-zinc-900/60'
-                }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <div className="w-20 h-20 bg-zinc-900 border border-zinc-700 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:border-indigo-500/50 transition-colors">
-                <Upload className="w-9 h-9 text-zinc-500 group-hover:text-indigo-400 transition-colors" />
-              </div>
-              <p className="text-xl font-semibold text-white mb-2">Drop your sketch here</p>
-              <p className="text-zinc-500 text-sm">or click to browse — we'll handle the rest instantly</p>
-              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-            </div>
-            <p className="text-zinc-600 text-xs mt-6">
-              Upload any wireframe or sketch &rarr; AI analysis &rarr; 4K UI &rarr; Full code by Devstral 2
-            </p>
-          </div>
-        )}
-
-        {/* === PROCESSING: Background work, show sketch + spinner === */}
-        {stage === 'processing' && (
-          <div className="flex flex-col items-center gap-8">
-            <div className="w-full max-w-2xl relative rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900 aspect-video flex items-center justify-center">
-              {previewUrl && (
-                <img src={previewUrl} alt="Uploaded sketch" className="w-full h-full object-contain opacity-30" />
-              )}
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-5">
-                {/* Animated rings */}
-                <div className="relative">
-                  <div className="w-20 h-20 rounded-full border-2 border-indigo-500/30 absolute inset-0 animate-ping" />
-                  <div className="w-20 h-20 rounded-full border-2 border-indigo-500/20 absolute inset-0 animate-ping" style={{ animationDelay: '0.3s' }} />
-                  <div className="w-20 h-20 bg-zinc-900/80 rounded-full flex items-center justify-center relative">
-                    <Sparkles className="w-9 h-9 text-indigo-400 animate-pulse" />
-                  </div>
-                </div>
-                <div className="text-center">
-                  <p className="text-white font-semibold text-lg">{progressStep}</p>
-                  <p className="text-zinc-500 text-sm mt-1">Generating your 4K UI in the background…</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Progress Steps */}
-            <div className="flex items-center gap-6 text-sm">
-              {[
-                { label: 'AI Analysis', done: !!analysisText },
-                { label: '4K UI Design', done: !!generatedImageUrl },
-                { label: 'Ready for Code', done: false },
-              ].map((step, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  {step.done
-                    ? <CheckCircle className="w-4 h-4 text-green-500" />
-                    : <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
-                  }
-                  <span className={step.done ? 'text-zinc-300' : 'text-zinc-500'}>{step.label}</span>
-                  {i < 2 && <span className="text-zinc-700 ml-4">—</span>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* === READY: Show generated UI + CTA === */}
-        {stage === 'ready' && generatedImageUrl && (
-          <div className="flex flex-col items-center gap-8">
-            <div className="w-full rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl shadow-black/50">
-              <img src={generatedImageUrl} alt="Generated 4K UI" className="w-full object-contain" />
-            </div>
-
-            <div className="flex flex-col items-center gap-4 w-full max-w-sm">
-              <button
-                onClick={() => setStage('chatting')}
-                className="w-full flex items-center justify-center gap-2.5 py-4 px-6 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 hover:scale-[1.02] text-base"
-              >
-                <Bot className="w-5 h-5 text-indigo-200" />
-                Generate Code with Devstral 2
-              </button>
-              <button
-                onClick={handleReset}
-                className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
-              >
-                Upload a different sketch
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* === CHATTING: Devstral 2 code generation === */}
-        {stage === 'chatting' && analysisText && (
-          <div className="flex flex-col gap-6">
-            {generatedImageUrl && (
-              <div className="w-full rounded-2xl overflow-hidden border border-zinc-800 max-h-64 flex items-center justify-center bg-zinc-900">
-                <img src={generatedImageUrl} alt="4K UI reference" className="h-64 object-contain" />
+          <div className="p-6 min-h-full">
+            {error && (
+              <div className="mb-6 p-4 bg-red-900/40 border border-red-500/30 rounded-2xl flex items-start gap-3 text-red-300">
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                <p className="text-xs">{error}</p>
               </div>
             )}
-            <ChatBox initialAnalysis={analysisText} />
+
+            {/* === IDLE === */}
+            {stage === 'idle' && (
+              <div className="flex flex-col items-center justify-center h-full py-12 text-center animate-in fade-in zoom-in duration-500">
+                <div
+                  className={`relative w-full border-2 border-dashed rounded-3xl p-12 text-center transition-all cursor-pointer group active:scale-95
+                    ${isDragging ? 'border-[#d4af37] bg-[#d4af37]/10' : 'border-[#d4af37]/20 hover:border-[#d4af37]/40 bg-[#0d2818]/20'}
+                  `}
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+                  onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]); }}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <div className="w-24 h-24 bg-[#0d2818] border border-[#d4af37]/40 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl relative">
+                    <div className="absolute inset-0 bg-[#d4af37]/10 animate-pulse rounded-full" />
+                    <Upload className="w-10 h-10 text-[#d4af37]" />
+                  </div>
+                  <h2 className="text-3xl font-bold text-[#d4af37] mb-4 epic-font">Map the Path</h2>
+                  <p className="text-[#e0d7b8]/60 text-sm italic font-serif leading-relaxed">
+                    Cast your sketch into the forest.<br />We will weave your vision into reality.
+                  </p>
+                  <input type="file" ref={fileInputRef} onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} accept="image/*" className="hidden" />
+                </div>
+
+                <div className="mt-12 flex flex-col gap-6 w-full max-w-[280px]">
+                  <div className="flex items-center gap-4 text-[#d4af37]/40 text-xs tracking-widest uppercase italic">
+                    <div className="h-[1px] flex-1 bg-[#d4af37]/20" />
+                    Our Vow
+                    <div className="h-[1px] flex-1 bg-[#d4af37]/20" />
+                  </div>
+                  <div className="space-y-4">
+                    {[
+                      { icon: MapIcon, text: "Instant Scrying (Analysis)" },
+                      { icon: Compass, text: "Epic 4K Forging (UI)" },
+                      { icon: Bot, text: "Devstral Code Magic" }
+                    ].map((vow, i) => (
+                      <div key={i} className="flex items-center gap-3 text-left">
+                        <vow.icon className="w-4 h-4 text-[#d4af37]/60" />
+                        <span className="text-[11px] text-[#e0d7b8]/40 tracking-wide font-serif">{vow.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* === PROCESSING === */}
+            {stage === 'processing' && (
+              <div className="flex flex-col items-center justify-center h-full py-12 animate-in fade-in duration-700">
+                <div className="w-full relative rounded-3xl overflow-hidden border border-[#d4af37]/20 bg-[#0d2818]/40 aspect-[9/16] flex items-center justify-center">
+                  {previewUrl && <img src={previewUrl} className="w-full h-full object-cover opacity-20 filter grayscale contrast-150" />}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-8">
+                    <div className="relative">
+                      <div className="w-24 h-24 rounded-full border border-[#d4af37]/20 absolute inset-0 animate-ping" />
+                      <div className="w-24 h-24 rounded-full border border-[#d4af37]/10 absolute inset-0 animate-ping delay-500" />
+                      <div className="w-24 h-24 bg-[#0d2818]/60 backdrop-blur-xl border border-[#d4af37]/40 rounded-full flex items-center justify-center relative shadow-[0_0_30px_rgba(212,175,55,0.2)]">
+                        <Sparkles className="w-10 h-10 text-[#d4af37] animate-pulse" />
+                      </div>
+                    </div>
+                    <div className="text-center px-6">
+                      <h3 className="text-[#d4af37] epic-font text-xl mb-2">{progressStep}</h3>
+                      <p className="text-[#e0d7b8]/40 text-xs italic font-serif">The spirits are weaving your 4K tapestry…</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* === READY === */}
+            {stage === 'ready' && generatedImageUrl && (
+              <div className="flex flex-col items-center gap-10 animate-in slide-in-from-bottom-10 duration-700 h-full">
+                <div className="w-full rounded-2xl overflow-hidden border border-[#d4af37]/30 shadow-2xl relative group">
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#05100a] via-transparent to-transparent z-10 opacity-60" />
+                  <img src={generatedImageUrl} className="w-full object-contain" />
+                  <div className="absolute bottom-4 left-4 z-20">
+                    <span className="bg-[#d4af37] text-[#05100a] text-[10px] font-bold px-2 py-0.5 rounded epic-font">4K Artifact</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center gap-6 w-full mt-auto mb-12">
+                  <button
+                    onClick={() => setStage('chatting')}
+                    className="gold-button w-full text-lg epic-font"
+                  >
+                    Summon Devstral
+                  </button>
+                  <button onClick={handleReset} className="text-[10px] tracking-widest uppercase text-[#d4af37]/40 hover:text-[#d4af37] transition-colors epic-font">
+                    Discard Artifact
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* === CHATTING === */}
+            {stage === 'chatting' && analysisText && (
+              <div className="flex flex-col gap-8 animate-in fade-in duration-500 h-full">
+                {generatedImageUrl && (
+                  <div className="w-full rounded-2xl overflow-hidden border border-[#d4af37]/20 relative">
+                    <img src={generatedImageUrl} className="w-full h-40 object-cover opacity-50" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#05100a] to-transparent" />
+                  </div>
+                )}
+                <div className="flex-1 -mx-6 h-full"> {/* Overflow compensation for chatbox padding */}
+                  <ChatBox initialAnalysis={analysisText} />
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </main>
     </div>
   );
