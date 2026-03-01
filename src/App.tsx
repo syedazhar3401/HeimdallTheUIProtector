@@ -298,21 +298,30 @@ function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBac
           border: '1px solid rgba(212,175,55,0.18)',
           boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
         }}>
-          {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 34, height: 34, borderRadius: 10,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'radial-gradient(circle at 35% 35%, rgba(212,175,55,0.25), rgba(8,12,15,0.8))',
-              border: '1px solid rgba(212,175,55,0.4)',
-              boxShadow: '0 0 10px rgba(212,175,55,0.2)',
-            }}>
-              <span style={{ fontFamily: 'Cinzel, serif', color: '#d4af37', fontSize: 14 }}>ᚺ</span>
-            </div>
-            <span style={{ fontFamily: 'Cinzel, serif', color: '#e8cb6a', fontWeight: 700, fontSize: 14, letterSpacing: '0.2em' }}>
-              HEIMDALL
-            </span>
-          </div>
+          {/* Logo — dynamic Heimdall avatar GIF based on current stage */}
+          {(() => {
+            const gifSrc =
+              stage === 'processing' ? '/heimdallGifs/heimdallGenerating.gif'
+                : stage === 'chatting' ? '/heimdallGifs/heimdallTalking.gif'
+                  : '/heimdallGifs/heimdallVibing.gif';
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <img
+                  src={gifSrc}
+                  alt="Heimdall avatar"
+                  style={{
+                    width: 80, height: 80, borderRadius: 14,
+                    border: '1px solid rgba(212,175,55,0.4)',
+                    boxShadow: '0 0 14px rgba(212,175,55,0.3)',
+                    objectFit: 'cover',
+                  }}
+                />
+                <span style={{ fontFamily: 'Cinzel, serif', color: '#e8cb6a', fontWeight: 700, fontSize: 14, letterSpacing: '0.2em' }}>
+                  HEIMDALL
+                </span>
+              </div>
+            );
+          })()}
           {/* Badge */}
           <div className="tag-badge">
             <Sparkles style={{ width: 7, height: 7 }} />
