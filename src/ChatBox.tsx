@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Download, Loader2, Bot, User } from 'lucide-react';
 import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
 
 interface Message {
     role: 'system' | 'user' | 'assistant';
@@ -131,8 +130,14 @@ This exact format with the bold **filename** is required so the file parser can 
             }
         }
         if (hasFiles) {
-            const blob = await zip.generateAsync({ type: 'blob' });
-            saveAs(blob, 'heimdall-artifact.zip');
+            // Use base64 data URL — avoids blob URL naming issues in Chrome/Vite contexts
+            const base64 = await zip.generateAsync({ type: 'base64' });
+            const a = document.createElement('a');
+            a.href = `data:application/zip;base64,${base64}`;
+            a.download = 'heimdall-artifact.zip';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         } else {
             alert("No artifacts found to materialize. Ask Devstral to forge the files first.");
         }
