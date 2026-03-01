@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, DragEvent, ChangeEvent, useCallback } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import { Upload, Loader2, Sparkles, AlertCircle, Key, Bot, CheckCircle, Shield, Eye, Zap, Download, FileText } from 'lucide-react';
+import { Upload, Loader2, Sparkles, AlertCircle, Key, Bot, CheckCircle, Shield, Eye, Zap, Download, FileText, X, Maximize2 } from 'lucide-react';
 import ChatBox from './ChatBox';
 
 declare global {
@@ -125,7 +125,14 @@ export default function App() {
   return <MainApp onKeyError={() => setHasKey(false)} gifBackground={<GifBackground />} />;
 }
 
-type Stage = 'idle' | 'processing' | 'ready' | 'chatting';
+type Stage = 'idle' | 'processing' | 'selection' | 'ready' | 'chatting';
+
+// Labels for what each generated image node represents
+const DESIGN_LABELS = [
+  { title: 'True to Sketch', rune: 'ᚠ', desc: '100% faithful to your drawing' },
+  { title: 'Enhanced', rune: 'ᚱ', desc: 'Improved complexity & detail' },
+  { title: 'Elite Forge', rune: 'ᛟ', desc: 'Elite, intricate reimagining' },
+];
 
 function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBackground: React.ReactNode }) {
   const [file, setFile] = useState<File | null>(null);
@@ -135,7 +142,15 @@ function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBac
   const [stage, setStage] = useState<Stage>('idle');
   const [progressStep, setProgressStep] = useState<string>('');
   const [progressIdx, setProgressIdx] = useState(0);
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+
+  // Multi-image state
+  const [generatedImages, setGeneratedImages] = useState<(string | null)[]>([null, null, null]);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+
+  // Preview modal state
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [previewImageIndex, setPreviewImageIndex] = useState<number | null>(null);
+
   const [error, setError] = useState<string | null>(null);
   const [analysisText, setAnalysisText] = useState<string | null>(null);
 
@@ -143,7 +158,7 @@ function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBac
 
   const STEPS = [
     { icon: Eye, label: 'Scrying the sketch', sub: 'Vision analysis' },
-    { icon: Zap, label: 'Forging the UI', sub: 'Image generation' },
+    { icon: Zap, label: 'Forging the UI', sub: 'Generating 3 designs' },
     { icon: Bot, label: 'Ready for Devstral', sub: 'Awaiting summon' },
   ];
 
@@ -161,7 +176,8 @@ function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBac
   const runGeneration = useCallback(async (selectedFile: File) => {
     setStage('processing');
     setError(null);
-    setGeneratedImageUrl(null);
+    setGeneratedImages([null, null, null]);
+    setSelectedImageUrl(null);
     setAnalysisText(null);
     setProgressIdx(0);
 
@@ -190,38 +206,61 @@ function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBac
       if (!analysis) throw new Error('Scrying failed.');
       setAnalysisText(analysis);
 
-      setProgressStep('Forging UI...');
+      setProgressStep('Forging 3 designs...');
       setProgressIdx(1);
 
-      const generationPrompt = `A high-fidelity, modern, clean, and professional UI design. ${analysis}. The design should look like a finished product screenshot from Dribbble or Behance, with proper spacing, modern typography, and a cohesive color scheme. Do not include any hand-drawn elements, make it look like a real digital product.`;
+      // Shared foundational prompt — all 3 share the same base style
+      const foundationalPrompt = `A high-fidelity, modern, clean, and professional UI design. ${analysis}. The design should look like a finished product screenshot from Dribbble or Behance, with proper spacing, modern typography, and a cohesive color scheme. Do not include any hand-drawn elements, make it look like a real digital product.`;
 
-      const generationResponse = await ai.models.generateContent({
-        model: 'gemini-3-pro-image-preview',
-        contents: { parts: [{ text: generationPrompt }] },
-        config: {
-          imageConfig: {
-            imageSize: '4K',
-            aspectRatio: '16:9',
+      const promptVariants = [
+        // Design 1: 100% strict adherence
+        foundationalPrompt,
+        // Design 2: enhanced on top of the same base style
+        foundationalPrompt + ' Additionally, enhance the design with improved visual complexity, richer micro-details, and more refined component styling — building directly on top of the established layout, color scheme, and formatting without altering its structure.',
+        // Design 3: elite complexity on top of the same base style
+        foundationalPrompt + ' Additionally, take the design to an elite, premium level with intricate visual depth, sophisticated component hierarchy, advanced UI patterns, rich gradients, and subtle animations implied through static design — amplifying the established layout, color scheme, and formatting to its highest expression without altering its structure.',
+      ];
+
+      // Fire all 3 in parallel, reveal each one as it resolves
+      const imagePromises = promptVariants.map((prompt, idx) =>
+        ai.models.generateContent({
+          model: 'gemini-3-pro-image-preview',
+          contents: { parts: [{ text: prompt }] },
+          config: {
+            imageConfig: {
+              imageSize: '4K',
+              aspectRatio: '16:9',
+            },
           },
-        },
-      });
-
-      let imageUrl: string | null = null;
-      if (generationResponse.candidates?.[0]?.content?.parts) {
-        for (const part of generationResponse.candidates[0].content.parts) {
-          if (part.inlineData) {
-            imageUrl = `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
-            break;
+        }).then((resp) => {
+          let imageUrl: string | null = null;
+          if (resp.candidates?.[0]?.content?.parts) {
+            for (const part of resp.candidates[0].content.parts) {
+              if (part.inlineData) {
+                imageUrl = `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
+                break;
+              }
+            }
           }
-        }
-      }
+          if (imageUrl) {
+            // Reveal each node as it comes in
+            setGeneratedImages((prev) => {
+              const next = [...prev];
+              next[idx] = imageUrl;
+              return next;
+            });
+          }
+          return imageUrl;
+        })
+      );
 
-      if (!imageUrl) throw new Error('Forging failed — no image returned.');
+      const results = await Promise.all(imagePromises);
+      const allSucceeded = results.every((url) => !!url);
+      if (!allSucceeded) throw new Error('One or more designs failed to forge. Try again.');
 
-      setGeneratedImageUrl(imageUrl);
       setProgressIdx(2);
       setProgressStep('');
-      setStage('ready');
+      setStage('selection');
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'The Bifrost collapsed. Try again.');
@@ -245,16 +284,36 @@ function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBac
     setFile(null);
     setPreviewUrl(null);
     setStage('idle');
-    setGeneratedImageUrl(null);
+    setGeneratedImages([null, null, null]);
+    setSelectedImageUrl(null);
+    setPreviewImageUrl(null);
+    setPreviewImageIndex(null);
     setAnalysisText(null);
     setError(null);
   };
 
+  const openPreview = (url: string, idx: number) => {
+    setPreviewImageUrl(url);
+    setPreviewImageIndex(idx);
+  };
+
+  const closePreview = () => {
+    setPreviewImageUrl(null);
+    setPreviewImageIndex(null);
+  };
+
+  const handleSelectDesign = (url: string) => {
+    setSelectedImageUrl(url);
+    setPreviewImageUrl(null);
+    setPreviewImageIndex(null);
+    setStage('ready');
+  };
+
   // ── Download helpers ────────────────────────────────────────────────
   const downloadImage = () => {
-    if (!generatedImageUrl) return;
+    if (!selectedImageUrl) return;
     const a = document.createElement('a');
-    a.href = generatedImageUrl; // already a base64 data URI
+    a.href = selectedImageUrl;
     a.download = 'heimdall-vision.png';
     document.body.appendChild(a);
     a.click();
@@ -278,6 +337,118 @@ function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBac
 
       {/* ── Full-screen looping GIF background ── */}
       {gifBackground}
+
+      {/* ══════════════════════════════════════════
+           FULL-SCREEN IMAGE PREVIEW MODAL
+          ══════════════════════════════════════════ */}
+      {previewImageUrl !== null && previewImageIndex !== null && (() => {
+        const label = DESIGN_LABELS[previewImageIndex];
+        return (
+          <div
+            role="dialog"
+            aria-modal="true"
+            onKeyDown={(e) => e.key === 'Escape' && closePreview()}
+            tabIndex={-1}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 100,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              padding: '24px 20px',
+              background: 'rgba(4,6,9,0.92)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              animation: 'fadeIn 0.2s ease',
+            }}
+            onClick={(e) => { if (e.target === e.currentTarget) closePreview(); }}
+          >
+            {/* Modal card */}
+            <div style={{
+              width: '100%', maxWidth: 900,
+              display: 'flex', flexDirection: 'column', gap: 0,
+              borderRadius: 24, overflow: 'hidden',
+              border: '1px solid rgba(212,175,55,0.35)',
+              boxShadow: '0 0 80px rgba(212,175,55,0.1), 0 30px 80px rgba(0,0,0,0.7)',
+              background: 'rgba(8,12,15,0.95)',
+            }}>
+
+              {/* Modal header */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '16px 20px',
+                borderBottom: '1px solid rgba(212,175,55,0.12)',
+                background: 'rgba(212,175,55,0.04)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontFamily: 'serif', color: '#d4af37', fontSize: 18 }}>{label.rune}</span>
+                  <div>
+                    <p style={{ fontFamily: 'Cinzel, serif', color: '#d4af37', fontSize: 12, letterSpacing: '0.15em', fontWeight: 700 }}>{label.title}</p>
+                    <p style={{ fontFamily: 'Josefin Sans, sans-serif', color: 'rgba(160,144,112,0.7)', fontSize: 10 }}>{label.desc}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={closePreview}
+                  title="Close preview"
+                  style={{
+                    width: 32, height: 32, borderRadius: 10,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    cursor: 'pointer', color: 'rgba(212,175,55,0.7)',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <X style={{ width: 15, height: 15 }} />
+                </button>
+              </div>
+
+              {/* Full-size image */}
+              <div style={{ width: '100%', overflow: 'hidden', maxHeight: '65vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
+                <img
+                  src={previewImageUrl}
+                  alt={label.title}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', maxHeight: '65vh', display: 'block' }}
+                />
+              </div>
+
+              {/* Modal footer — actions */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '14px 20px',
+                borderTop: '1px solid rgba(212,175,55,0.12)',
+                gap: 10,
+              }}>
+                <button
+                  onClick={closePreview}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '9px 16px', borderRadius: 12, cursor: 'pointer',
+                    background: 'transparent',
+                    border: '1px solid rgba(212,175,55,0.2)',
+                    color: 'rgba(212,175,55,0.6)', fontFamily: 'Josefin Sans, sans-serif',
+                    fontSize: 11, letterSpacing: '0.06em', fontWeight: 600,
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <X style={{ width: 12, height: 12 }} />
+                  Close
+                </button>
+                <button
+                  onClick={() => handleSelectDesign(previewImageUrl)}
+                  className="btn-bifrost"
+                  style={{ margin: 0 }}
+                >
+                  <CheckCircle style={{ width: 15, height: 15 }} />
+                  Choose This Vision
+                </button>
+              </div>
+            </div>
+
+            {/* Esc hint */}
+            <p style={{ marginTop: 12, fontFamily: 'Josefin Sans, sans-serif', color: 'rgba(160,144,112,0.35)', fontSize: 10, letterSpacing: '0.08em' }}>
+              Press ESC or click outside to close
+            </p>
+          </div>
+        );
+      })()}
 
       {/* ── Floating Header — transparent, above GIF ── */}
       <header style={{
@@ -303,7 +474,8 @@ function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBac
             const gifSrc =
               stage === 'processing' ? '/heimdallGifs/heimdallGenerating.gif'
                 : stage === 'chatting' ? '/heimdallGifs/heimdallTalking.gif'
-                  : '/heimdallGifs/heimdallVibing.gif';
+                  : stage === 'selection' ? '/heimdallGifs/heimdallGenerating.gif'
+                    : '/heimdallGifs/heimdallVibing.gif';
             return (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <img
@@ -344,7 +516,8 @@ function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBac
         paddingLeft: 16,
         paddingRight: 16,
       }}>
-        <div style={{ width: '100%', maxWidth: 440 }}>
+        {/* Selection stage gets a wider container */}
+        <div style={{ width: '100%', maxWidth: stage === 'selection' ? 860 : 440 }}>
 
           {/* ── Error Banner ── */}
           {error && (
@@ -438,7 +611,7 @@ function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBac
                 <div className="rune-divider" style={{ marginBottom: 4 }}>Our Vow</div>
                 {[
                   { icon: Eye, label: 'Instant Vision Analysis', rune: 'ᚢ' },
-                  { icon: Zap, label: 'Epic UI Generation', rune: 'ᚱ' },
+                  { icon: Zap, label: '3 Epic UI Variations', rune: 'ᚱ' },
                   { icon: Bot, label: 'Devstral Code Summoning', rune: 'ᛗ' },
                 ].map((item, i) => (
                   <div key={i} className="animate-fade-up" style={{
@@ -533,6 +706,57 @@ function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBac
                     </div>
                   );
                 })}
+
+                {/* ── 3 Design Forge Nodes — visible when forging is active ── */}
+                {progressIdx >= 1 && (
+                  <div style={{
+                    marginTop: 16,
+                    paddingTop: 14,
+                    borderTop: '1px solid rgba(212,175,55,0.1)',
+                    display: 'flex',
+                    gap: 10,
+                  }}>
+                    {DESIGN_LABELS.map((d, i) => {
+                      const isReady = generatedImages[i] !== null;
+                      return (
+                        <div key={i} style={{
+                          flex: 1,
+                          borderRadius: 14,
+                          overflow: 'hidden',
+                          border: `1px solid ${isReady ? 'rgba(212,175,55,0.5)' : 'rgba(212,175,55,0.15)'}`,
+                          background: 'rgba(8,12,15,0.6)',
+                          transition: 'border-color 0.5s ease',
+                          position: 'relative',
+                          aspectRatio: '16/9',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 6,
+                        }}>
+                          {isReady ? (
+                            <>
+                              <img
+                                src={generatedImages[i]!}
+                                alt={d.title}
+                                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7 }}
+                              />
+                              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(8,12,15,0.85) 100%)' }} />
+                              <CheckCircle style={{ position: 'relative', zIndex: 2, width: 16, height: 16, color: '#d4af37' }} />
+                              <p style={{ position: 'relative', zIndex: 2, fontFamily: 'Cinzel, serif', fontSize: 9, color: '#d4af37', letterSpacing: '0.1em', textAlign: 'center' }}>{d.title}</p>
+                            </>
+                          ) : (
+                            <>
+                              <Loader2 style={{ width: 16, height: 16, color: 'rgba(212,175,55,0.5)', animation: 'spin 1.2s linear infinite', animationDelay: `${i * 200}ms` }} />
+                              <p style={{ fontFamily: 'Cinzel, serif', fontSize: 9, color: 'rgba(212,175,55,0.35)', letterSpacing: '0.08em', textAlign: 'center' }}>{d.title}</p>
+                              <p style={{ fontSize: 8, color: 'rgba(160,144,112,0.3)', textAlign: 'center' }}>Forging…</p>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <p style={{ fontFamily: 'Cinzel, serif', color: 'rgba(212,175,55,0.4)', fontSize: 10, letterSpacing: '0.3em', textAlign: 'center', textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>
@@ -542,16 +766,156 @@ function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBac
           )}
 
           {/* ═══════════════════════════════
+                   SELECTION STAGE
+              ═══════════════════════════════ */}
+          {stage === 'selection' && (
+            <div className="animate-fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+              {/* Heimdall prompt header */}
+              <div style={{
+                textAlign: 'center',
+                background: 'rgba(5,8,12,0.78)',
+                backdropFilter: 'blur(14px)',
+                WebkitBackdropFilter: 'blur(14px)',
+                borderRadius: 20,
+                padding: '20px 24px',
+                border: '1px solid rgba(212,175,55,0.25)',
+                boxShadow: '0 0 40px rgba(212,175,55,0.08)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 10 }}>
+                  <div className="sigil-orb" style={{ width: 36, height: 36 }}>
+                    <Shield style={{ width: 16, height: 16, color: '#d4af37' }} />
+                  </div>
+                </div>
+                <p style={{ fontFamily: 'Cinzel, serif', color: '#d4af37', fontSize: 10, letterSpacing: '0.4em', textTransform: 'uppercase', marginBottom: 8 }}>
+                  Heimdall Speaks
+                </p>
+                <h2 style={{ fontFamily: 'Cinzel, serif', color: '#f5ecd5', fontSize: 20, fontWeight: 700, letterSpacing: '0.06em', marginBottom: 8, textShadow: '0 0 20px rgba(212,175,55,0.2)' }}>
+                  Three visions have been forged.
+                </h2>
+                <p style={{ fontFamily: 'Josefin Sans, sans-serif', color: 'rgba(212,175,55,0.7)', fontSize: 13, lineHeight: 1.6 }}>
+                  Seeker, which vision shall I carry through the Bifrost?<br />
+                  <span style={{ color: 'rgba(160,144,112,0.6)', fontSize: 11 }}>Tap a design to claim it. The chosen one shall be sent to Devstral.</span>
+                </p>
+              </div>
+
+              {/* 3-image grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+                {generatedImages.map((url, i) => {
+                  const label = DESIGN_LABELS[i];
+                  if (!url) return null;
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        borderRadius: 18,
+                        overflow: 'hidden',
+                        border: '1px solid rgba(212,175,55,0.3)',
+                        position: 'relative',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        background: 'rgba(8,12,15,0.5)',
+                        transition: 'transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease, border-color 0.22s ease',
+                        boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-6px) scale(1.02)';
+                        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 12px 40px rgba(212,175,55,0.25), 0 0 0 1.5px rgba(212,175,55,0.6)';
+                        (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(212,175,55,0.7)';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0) scale(1)';
+                        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 24px rgba(0,0,0,0.4)';
+                        (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(212,175,55,0.3)';
+                      }}
+                    >
+                      {/* Generated image — click opens full preview */}
+                      <button
+                        onClick={() => openPreview(url, i)}
+                        title={`Preview ${label.title}`}
+                        style={{
+                          all: 'unset', cursor: 'pointer', display: 'block',
+                          aspectRatio: '16/9', overflow: 'hidden', position: 'relative',
+                        }}
+                      >
+                        <img
+                          src={url}
+                          alt={label.title}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        />
+                        {/* Preview hover overlay */}
+                        <div style={{
+                          position: 'absolute', inset: 0,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          background: 'rgba(4,6,9,0)',
+                          transition: 'background 0.2s',
+                          gap: 6,
+                        }}
+                          onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(4,6,9,0.55)'; }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(4,6,9,0)'; }}
+                        >
+                          <Maximize2 style={{ width: 20, height: 20, color: '#d4af37', filter: 'drop-shadow(0 0 6px rgba(212,175,55,0.8))' }} />
+                          <span style={{ fontFamily: 'Cinzel, serif', fontSize: 10, color: '#d4af37', letterSpacing: '0.1em', textShadow: '0 0 12px rgba(212,175,55,0.8)' }}>Preview</span>
+                        </div>
+                      </button>
+
+                      {/* Label footer */}
+                      <div style={{
+                        padding: '12px 14px',
+                        background: 'rgba(5,8,12,0.85)',
+                        borderTop: '1px solid rgba(212,175,55,0.1)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 3,
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontFamily: 'serif', color: '#d4af37', fontSize: 13 }}>{label.rune}</span>
+                            <span style={{ fontFamily: 'Cinzel, serif', color: '#d4af37', fontSize: 10, letterSpacing: '0.12em', fontWeight: 700 }}>{label.title}</span>
+                          </div>
+                          {/* Quick-choose button in footer */}
+                          <button
+                            onClick={() => handleSelectDesign(url)}
+                            title="Choose this design"
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 4,
+                              padding: '4px 10px', borderRadius: 8, cursor: 'pointer',
+                              background: 'rgba(212,175,55,0.12)',
+                              border: '1px solid rgba(212,175,55,0.35)',
+                              color: '#d4af37', fontFamily: 'Josefin Sans, sans-serif',
+                              fontSize: 9, letterSpacing: '0.06em', fontWeight: 700,
+                              transition: 'all 0.2s',
+                            }}
+                          >
+                            <CheckCircle style={{ width: 10, height: 10 }} />
+                            Choose
+                          </button>
+                        </div>
+                        <p style={{ fontFamily: 'Josefin Sans, sans-serif', color: 'rgba(160,144,112,0.7)', fontSize: 9, letterSpacing: '0.04em' }}>{label.desc}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Reset option */}
+              <button onClick={handleReset} className="btn-ghost" style={{ alignSelf: 'center' }}>
+                ᛟ  Discard &amp; Start Over  ᛟ
+              </button>
+            </div>
+          )}
+
+          {/* ═══════════════════════════════
                    READY STAGE
               ═══════════════════════════════ */}
-          {stage === 'ready' && generatedImageUrl && (
+          {stage === 'ready' && selectedImageUrl && (
             <div className="animate-fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{
                 position: 'relative', borderRadius: 20, overflow: 'hidden',
                 border: '1px solid rgba(212,175,55,0.3)',
                 boxShadow: '0 0 40px rgba(212,175,55,0.12), 0 20px 60px rgba(0,0,0,0.5)',
               }}>
-                <img src={generatedImageUrl} style={{ width: '100%', display: 'block' }} />
+                <img src={selectedImageUrl} style={{ width: '100%', display: 'block' }} />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 60%, rgba(8,12,15,0.7) 100%)' }} />
                 <div style={{ position: 'absolute', top: 12, left: 12 }}>
                   <span className="tag-badge"><Zap style={{ width: 7, height: 7 }} />Artifact Forged</span>
@@ -562,7 +926,7 @@ function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBac
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 4 }}>
                   <CheckCircle style={{ width: 14, height: 14, color: '#d4af37' }} />
                   <p style={{ fontFamily: 'Cinzel, serif', color: '#d4af37', fontSize: 13, letterSpacing: '0.12em', textShadow: '0 0 20px rgba(212,175,55,0.4)' }}>
-                    Vision Forged
+                    Vision Chosen
                   </p>
                 </div>
                 <p style={{ color: 'rgba(160,144,112,0.8)', fontSize: 12, textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>
@@ -617,12 +981,12 @@ function MainApp({ onKeyError, gifBackground }: { onKeyError: () => void; gifBac
               ═══════════════════════════════ */}
           {stage === 'chatting' && analysisText && (
             <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {generatedImageUrl && (
+              {selectedImageUrl && (
                 <div style={{
                   position: 'relative', borderRadius: 16, overflow: 'hidden', height: 100,
                   border: '1px solid rgba(212,175,55,0.15)',
                 }}>
-                  <img src={generatedImageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.45 }} />
+                  <img src={selectedImageUrl} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.45 }} />
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(8,12,15,0.7), transparent)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px' }}>
                     <div>
                       <p style={{ fontFamily: 'Cinzel, serif', color: '#d4af37', fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Active Artifact</p>
