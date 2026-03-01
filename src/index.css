@@ -1,86 +1,419 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  :root {
-    --forest-green: 13, 40, 24;
-    --epic-gold: 212, 175, 55;
-    --dark-void: 5, 16, 10;
-    --parchment: 224, 215, 184;
-    --glow-gold: 0px 0px 15px rgba(212, 175, 55, 0.3);
-  }
+/* =============================================
+   UI-UX PRO MAX DESIGN SYSTEM
+   Theme: Norse / Asgard / Heimdall
+   Style: Glassmorphism + Dimensional Layering + Micro-interactions
+   Palette: Architecture/Theater Dark + Gold (Colors Data #90 + #83)
+   Typography Pairing #32: Cinzel + Josefin Sans
+   ============================================= */
 
-  body {
-    @apply bg-zinc-950 text-white min-h-screen overflow-x-hidden;
-    background-color: rgb(var(--dark-void));
-    color: rgb(var(--parchment));
-    font-family: 'Cormorant Garamond', serif;
-  }
+/* ─── Design Tokens ─── */
+:root {
+  --asgard-void: #080c0f;
+  --asgard-deep: #0d1117;
+  --asgard-slate: #161b22;
+  --asgard-mist: #1f2937;
 
-  h1, h2, h3, h4, .epic-font {
-    font-family: 'Cinzel', serif;
-    @apply tracking-wider;
-  }
+  --bifrost-gold: #d4af37;
+  --bifrost-light: #e8cb6a;
+  --bifrost-dim: #9a7e28;
 
-  /* Chatbot font isolation */
-  .chatbot-font {
-    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --rune-parchment: #e8e0d0;
+  --rune-muted: #a09070;
+
+  --elev-1: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --elev-2: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --elev-3: 0 10px 30px rgba(0, 0, 0, 0.6);
+  --elev-4: 0 20px 60px rgba(0, 0, 0, 0.7);
+
+  --glow-sm: 0 0 8px rgba(212, 175, 55, 0.25);
+  --glow-md: 0 0 20px rgba(212, 175, 55, 0.35);
+  --glow-lg: 0 0 40px rgba(212, 175, 55, 0.18);
+}
+
+/* ─── Base ─── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background-color: var(--asgard-void);
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-color: var(--asgard-void);
+  color: var(--rune-parchment);
+  font-family: 'Josefin Sans', 'Segoe UI', sans-serif;
+  font-weight: 300;
+  letter-spacing: 0.03em;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.rune-font {
+  font-family: 'Cinzel', 'Palatino', serif;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+/* Chatbot font isolation */
+.chatbot-font {
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+/* Scrollbar */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─── Mobile Frame ─── */
+.mobile-frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: calc(100dvh - 32px);
+  margin: 16px auto;
+  border-radius: 48px;
+  background: rgba(13, 17, 23, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(212, 175, 55, 0.14);
+  box-shadow:
+    var(--elev-4),
+    0 0 0 1px rgba(212, 175, 55, 0.07),
+    inset 0 0 80px rgba(212, 175, 55, 0.02),
+    var(--glow-lg);
+  overflow: hidden;
+}
+
+@media (max-width: 480px) {
+  .mobile-frame {
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+    height: 100dvh;
+    border: none;
   }
 }
 
-@layer components {
-  /* Mobile Frame Simulation */
-  .mobile-frame-container {
-    @apply relative mx-auto overflow-hidden shadow-2xl transition-all duration-500;
-    max-width: 480px;
-    height: calc(100vh - 40px);
-    margin-top: 20px;
-    margin-bottom: 20px;
-    border: 4px solid rgb(var(--epic-gold), 0.2);
-    border-radius: 40px;
-    background-color: rgb(var(--dark-void));
-    box-shadow: var(--glow-gold);
+/* ─── Rune Divider ─── */
+.rune-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(212, 175, 55, 0.35);
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.rune-divider::before,
+.rune-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.22), transparent);
+}
+
+/* ─── Bifrost Button (Gold CTA) ─── */
+.btn-bifrost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px 24px;
+  border-radius: 16px;
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+  background: linear-gradient(135deg, #d4af37 0%, #b89130 50%, #d4af37 100%);
+  background-size: 200% 100%;
+  color: var(--asgard-void);
+  border: none;
+  box-shadow: 0 4px 0 #9a7e28, var(--glow-sm);
+  transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-position 300ms;
+}
+
+.btn-bifrost:hover {
+  background-position: right center;
+  box-shadow: 0 6px 0 #9a7e28, var(--glow-md);
+  transform: translateY(-1px);
+}
+
+.btn-bifrost:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #9a7e28;
+}
+
+/* ─── Ghost Button ─── */
+.btn-ghost {
+  display: block;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  font-family: 'Cinzel', serif;
+  font-size: 8px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(212, 175, 55, 0.4);
+  transition: color 200ms;
+  background: none;
+  border: none;
+  padding: 10px;
+  width: 100%;
+}
+
+.btn-ghost:hover {
+  color: var(--bifrost-gold);
+}
+
+/* ─── Glass Card ─── */
+.glass-card {
+  border-radius: 20px;
+  background: rgba(22, 27, 34, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 175, 55, 0.12);
+  box-shadow: var(--elev-2), inset 0 1px 0 rgba(212, 175, 55, 0.06);
+  position: relative;
+}
+
+/* ─── Upload Zone ─── */
+.upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  border-radius: 28px;
+  padding: 40px 32px;
+  cursor: pointer;
+  border: 1.5px dashed rgba(212, 175, 55, 0.22);
+  background: rgba(13, 17, 23, 0.5);
+  min-height: 260px;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.upload-zone:hover,
+.upload-zone.dragging {
+  border-color: var(--bifrost-gold);
+  background: rgba(212, 175, 55, 0.04);
+  box-shadow: var(--glow-sm), inset 0 0 40px rgba(212, 175, 55, 0.025);
+  transform: scale(1.004);
+}
+
+.upload-zone:active {
+  transform: scale(0.997);
+}
+
+/* ─── Sigil Orb (Icon container with rotating conic gradient) ─── */
+.sigil-orb {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 72px;
+  height: 72px;
+  background: radial-gradient(circle at 35% 35%, rgba(212, 175, 55, 0.14), rgba(13, 17, 23, 0.9) 70%);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  box-shadow: var(--glow-sm), var(--elev-2), inset 0 1px 0 rgba(212, 175, 55, 0.1);
+}
+
+.sigil-orb::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0%, rgba(212, 175, 55, 0.1) 25%, transparent 50%);
+  animation: rune-spin 8s linear infinite;
+}
+
+@keyframes rune-spin {
+  from {
+    transform: rotate(0deg);
   }
 
-  @media (max-width: 640px) {
-    .mobile-frame-container {
-      @apply m-0 border-none rounded-none max-w-none h-screen;
-    }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ─── Gold Pulse Ring ─── */
+.ping-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  animation: gold-ping 2s ease-out infinite;
+}
+
+@keyframes gold-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
   }
 
-  /* Themed Background */
-  .adventure-bg {
-    @apply fixed inset-0 -z-10 pointer-events-none;
-    background-image: 
-      radial-gradient(circle at 50% 50%, rgba(var(--epic-gold), 0.05) 0%, transparent 70%),
-      url('/backgrounds/bg.gif');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    opacity: 0.15;
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+/* ─── Step Item ─── */
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  transition: all 300ms ease;
+  border: 1px solid transparent;
+}
+
+.step-item.active {
+  background: rgba(212, 175, 55, 0.07);
+  border-color: rgba(212, 175, 55, 0.18);
+}
+
+.step-item.done {
+  opacity: 0.45;
+}
+
+/* ─── HUD Scanlines ─── */
+.hud-scanlines {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 3px,
+      rgba(0, 0, 0, 0.07) 3px,
+      rgba(0, 0, 0, 0.07) 4px);
+}
+
+/* ─── Corner Rune Decoration ─── */
+.corner-decoration {
+  position: absolute;
+  pointer-events: none;
+  width: 18px;
+  height: 18px;
+  border-color: rgba(212, 175, 55, 0.35);
+  border-style: solid;
+}
+
+.corner-tl {
+  top: 14px;
+  left: 14px;
+  border-width: 2px 0 0 2px;
+  border-radius: 2px 0 0 0;
+}
+
+.corner-tr {
+  top: 14px;
+  right: 14px;
+  border-width: 2px 2px 0 0;
+  border-radius: 0 2px 0 0;
+}
+
+.corner-bl {
+  bottom: 14px;
+  left: 14px;
+  border-width: 0 0 2px 2px;
+  border-radius: 0 0 0 2px;
+}
+
+.corner-br {
+  bottom: 14px;
+  right: 14px;
+  border-width: 0 2px 2px 0;
+  border-radius: 0 0 2px 0;
+}
+
+/* ─── Tag Badge ─── */
+.tag-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-family: 'Cinzel', serif;
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  color: var(--bifrost-gold);
+}
+
+/* ─── Animations ─── */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
   }
 
-  .gold-button {
-    @apply flex items-center justify-center gap-2.5 py-4 px-6 rounded-xl font-semibold transition-all duration-300;
-    background: linear-gradient(135deg, rgb(var(--epic-gold)), #b89130);
-    color: rgb(var(--dark-void));
-    box-shadow: 0 4px 0 #b89130;
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
   }
 
-  .gold-button:hover {
-    @apply scale-[1.02] opacity-90;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 0 #b89130, var(--glow-gold);
+  to {
+    opacity: 1;
   }
+}
 
-  .gold-button:active {
-    transform: translateY(2px);
-    box-shadow: 0 2px 0 #b89130;
-  }
+.animate-fade-up {
+  animation: fade-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
 
-  .forest-card {
-    @apply bg-zinc-900/40 backdrop-blur-md border border-indigo-500/20 rounded-2xl p-6 shadow-xl;
-    border-color: rgba(var(--epic-gold), 0.1);
-  }
+.animate-fade-in {
+  animation: fade-in 0.4s ease both;
+}
+
+.animate-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animate-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animate-delay-300 {
+  animation-delay: 300ms;
 }
