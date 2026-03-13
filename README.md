@@ -67,11 +67,21 @@ Node.js
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+   ```
+   npm install
+   ```
+
+2. Set up your environment variables:
+   - Copy `.env.example` to a new file called `.env`
+   - Fill in your API keys:
+     - `GEMINI_API_KEY` → Get it from [Google AI Studio](https://aistudio.google.com/apikey)
+     - `MISTRAL_API_KEY` → Get it from [Mistral Console](https://console.mistral.ai/)
+
 3. Run the app:
-   `npm run dev`
+   ```
+   npm run dev
+   ```
+   Then open [http://localhost:3000](http://localhost:3000) in your browser.
